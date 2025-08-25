@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba Firebase - Risk Calcu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .success { color: #22c55e; }
+        .error { color: #ef4444; }
+        .info { color: #3b82f6; }
+        .warning { color: #f59e0b; }
+        button {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #2563eb; }
+        .data-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .risk-level {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .level-critical { background: #dc2626; }
+        .level-alto { background: #ea580c; }
+        .level-medio { background: #ca8a04; }
+        .level-bajo { background: #16a34a; }
+        .level-muy-bajo { background: #059669; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Prueba Firebase - Calculadora de Riesgo</h1>
+        <p class="info">Esta página te ayudará a probar la conectividad con Firebase y crear datos de demostración.</p>
+        
+        <div style="margin: 20px 0;">
+            <button onclick="testFirebaseConnection()">🔥 Probar Conexión Firebase</button>
+            <button onclick="createTestData()">📝 Crear Datos de Prueba</button>
+            <button onclick="loadStoredData()">📊 Cargar Datos Existentes</button>
+            <button onclick="clearAllData()">🗑️ Limpiar Datos</button>
+        </div>
+        
+        <div id="status" class="test-container">
+            <h3>📋 Estado de la Prueba</h3>
+            <div id="statusContent">Haz clic en "Probar Conexión Firebase" para comenzar...</div>
+        </div>
+        
+        <div id="dataDisplay" class="test-container">
+            <h3>💾 Datos de Evaluación</h3>
+            <div id="dataContent">No hay datos cargados aún...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Importar Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyDHI1JV_gxUE0tqnaWF9bWJvCwTrhzdSMM",
+            authDomain: "risk-calculator-9251e.firebaseapp.com",
+            projectId: "risk-calculator-9251e",
+            storageBucket: "risk-calculator-9251e.firebasestorage.app",
+            messagingSenderId: "657154942565",
+            appId: "1:657154942565:web:85b75fe6769db548a0c88c"
+        };
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Función para actualizar estado
+        function updateStatus(message, type = 'info') {
+            const statusContent = document.getElementById('statusContent');
+            const timestamp = new Date().toLocaleTimeString();
+            statusContent.innerHTML += `<div class="${type}">[${timestamp}] ${message}</div>`;
+            statusContent.scrollTop = statusContent.scrollHeight;
+        }
+
+        // Función para mostrar datos
+        function displayData(assessments) {
+            const dataContent = document.getElementById('dataContent');
+            if (assessments.length === 0) {
+                dataContent.innerHTML = '<div class="warning">No hay evaluaciones de riesgo guardadas.</div>';
+                return;
+            }
+
+            let html = `<div class="info">Total de evaluaciones: ${assessments.length}</div>`;
+            assessments.forEach((assessment, index) => {
+                const riskLevel = assessment.riskLevel || 'Bajo';
+                const levelClass = `level-${riskLevel.toLowerCase().replace(' ', '-')}`;
+                
+                html += `
+                    <div class="data-item">
+                        <h4>${assessment.name || `Evaluación ${index + 1}`}
+                            <span class="risk-level ${levelClass}">${riskLevel}</span>
+                        </h4>
+                        <p><strong>Activo:</strong> ${assessment.asset}</p>
+                        <p><strong>Amenaza:</strong> ${assessment.threat}</p>
+                        <p><strong>Vulnerabilidad:</strong> ${assessment.vulnerability}</p>
+                        <p><strong>Probabilidad:</strong> ${assessment.probability}/5 | <strong>Impacto:</strong> ${assessment.impact}/5</p>
+                        <p><strong>Método:</strong> ${assessment.method === 'qualitative' ? 'Cualitativo' : 'Cuantitativo'}</p>
+                        ${assessment.inherentRisk ? `<p><strong>Riesgo Inherente:</strong> ${assessment.inherentRisk.toFixed(2)}</p>` : ''}
+                        ${assessment.residualRisk ? `<p><strong>Riesgo Residual:</strong> ${assessment.residualRisk.toFixed(2)}</p>` : ''}
+                        <p><strong>Fecha:</strong> ${new Date(assessment.createdAt?.seconds * 1000 || Date.now()).toLocaleDateString()}</p>
+                    </div>
+                `;
+            });
+            dataContent.innerHTML = html;
+        }
+
+        // Función para calcular riesgo
+        function calculateRisk(assessment) {
+            const inherentRisk = assessment.method === 'qualitative' 
+                ? assessment.probability * assessment.impact
+                : (assessment.probability * (assessment.vulnerabilitySeverity || 1) * 
+                   ((assessment.confidentialityImpact + assessment.integrityImpact + assessment.availabilityImpact) / 3)) / 10;
+            
+            const controlReduction = (assessment.controlEffectiveness || 0) / 100;
+            const residualRisk = inherentRisk * (1 - controlReduction);
+            
+            let riskLevel = 'Bajo';
+            if (residualRisk >= 20) riskLevel = 'Crítico';
+            else if (residualRisk >= 15) riskLevel = 'Alto';
+            else if (residualRisk >= 10) riskLevel = 'Medio';
+            else if (residualRisk >= 5) riskLevel = 'Bajo';
+            else riskLevel = 'Muy Bajo';
+
+            return { inherentRisk, residualRisk, riskLevel };
+        }
+
+        // Datos de prueba
+        const testData = [
+            {
+                name: 'Vulnerabilidad Crítica en Servidor Web',
+                asset: 'Servidor Apache Principal',
+                description: 'Servidor web con versión desactualizada presenta vulnerabilidades críticas de seguridad',
+                threat: 'Explotación de CVE-2023-44487 (HTTP/2 Rapid Reset)',
+                vulnerability: 'Apache HTTP Server 2.4.41 sin parches de seguridad recientes',
+                method: 'quantitative',
+                probability: 4,
+                impact: 5,
+                vulnerabilitySeverity: 9,
+                controlEffectiveness: 40,
+                detectionCapability: 2,
+                responseCapability: 3,
+                confidentialityImpact: 4,
+                integrityImpact: 5,
+                availabilityImpact: 5,
+                existingControls: 'Firewall básico, logs manuales',
+                proposedControls: 'WAF, monitoreo automático, patches automáticos'
+            },
+            {
+                name: 'Filtración de Datos de Clientes',
+                asset: 'Base de Datos MySQL - Información Personal',
+                description: 'Riesgo alto de acceso no autorizado a datos personales de 50,000+ clientes',
+                threat: 'Inyección SQL, escalación de privilegios, acceso interno malicioso',
+                vulnerability: 'Credenciales por defecto, falta de encriptación, accesos sin auditar',
+                method: 'qualitative',
+                probability: 5,
+                impact: 5,
+                existingControls: 'Backup semanal, contraseñas básicas',
+                proposedControls: 'Encriptación AES-256, MFA, auditoría continua, DLP'
+            },
+            {
+                name: 'Ransomware en Infraestructura Crítica',
+                asset: 'Red Corporativa Completa',
+                description: 'Ataque de ransomware que puede paralizar operaciones por semanas',
+                threat: 'Malware avanzado, phishing dirigido, vulnerabilidades de red',
+                vulnerability: 'Sistemas Windows desactualizados, falta de segmentación de red',
+                method: 'quantitative',
+                probability: 3,
+                impact: 5,
+                vulnerabilitySeverity: 8,
+                controlEffectiveness: 70,
+                detectionCapability: 4,
+                responseCapability: 3,
+                confidentialityImpact: 3,
+                integrityImpact: 5,
+                availabilityImpact: 5,
+                existingControls: 'Antivirus tradicional, backup manual',
+                proposedControls: 'EDR/XDR, backup inmutable, network segmentation, SOAR'
+            }
+        ];
+
+        // Funciones globales para los botones
+        window.testFirebaseConnection = async function() {
+            updateStatus('🔄 Iniciando prueba de conexión con Firebase...', 'info');
+            
+            try {
+                // Intentar leer la colección
+                const querySnapshot = await getDocs(collection(db, 'riskAssessments'));
+                updateStatus(`✅ Conexión exitosa! Firestore responde correctamente.`, 'success');
+                updateStatus(`📊 Documentos encontrados: ${querySnapshot.size}`, 'info');
+                
+                if (querySnapshot.size > 0) {
+                    updateStatus('🔍 Cargando datos existentes...', 'info');
+                    loadStoredData();
+                } else {
+                    updateStatus('📝 Base de datos vacía. Puedes crear datos de prueba.', 'warning');
+                }
+                
+            } catch (error) {
+                updateStatus(`❌ Error de conexión: ${error.message}`, 'error');
+                updateStatus('💡 Asegúrate de haber configurado Firestore en la consola de Firebase', 'warning');
+            }
+        };
+
+        window.createTestData = async function() {
+            updateStatus('📝 Creando datos de prueba en Firebase...', 'info');
+            
+            try {
+                for (let i = 0; i < testData.length; i++) {
+                    const assessment = { ...testData[i] };
+                    const risks = calculateRisk(assessment);
+                    
+                    const finalAssessment = {
+                        ...assessment,
+                        ...risks,
+                        createdAt: new Date(),
+                        testData: true
+                    };
+
+                    const docRef = await addDoc(collection(db, 'riskAssessments'), finalAssessment);
+                    updateStatus(`✅ [${i+1}/${testData.length}] "${assessment.name}" creado con ID: ${docRef.id}`, 'success');
+                }
+                
+                updateStatus('🎉 ¡Datos de prueba creados exitosamente!', 'success');
+                updateStatus('🔄 Cargando datos actualizados...', 'info');
+                await loadStoredData();
+                
+            } catch (error) {
+                updateStatus(`❌ Error al crear datos: ${error.message}`, 'error');
+            }
+        };
+
+        window.loadStoredData = async function() {
+            updateStatus('📖 Cargando datos de Firebase...', 'info');
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, 'riskAssessments'));
+                const assessments = [];
+                
+                querySnapshot.forEach((doc) => {
+                    assessments.push({ id: doc.id, ...doc.data() });
+                });
+                
+                updateStatus(`✅ Cargados ${assessments.length} registros`, 'success');
+                displayData(assessments);
+                
+            } catch (error) {
+                updateStatus(`❌ Error al cargar datos: ${error.message}`, 'error');
+            }
+        };
+
+        window.clearAllData = async function() {
+            if (!confirm('⚠️ ¿Estás seguro de que quieres eliminar TODOS los datos? Esta acción no se puede deshacer.')) {
+                return;
+            }
+            
+            updateStatus('🗑️ Eliminando todos los datos...', 'warning');
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, 'riskAssessments'));
+                const deletePromises = [];
+                
+                querySnapshot.forEach((docSnapshot) => {
+                    deletePromises.push(deleteDoc(doc(db, 'riskAssessments', docSnapshot.id)));
+                });
+                
+                await Promise.all(deletePromises);
+                updateStatus(`✅ Eliminados ${deletePromises.length} documentos`, 'success');
+                displayData([]);
+                
+            } catch (error) {
+                updateStatus(`❌ Error al eliminar datos: ${error.message}`, 'error');
+            }
+        };
+
+        // Auto-iniciar prueba de conexión
+        setTimeout(() => {
+            updateStatus('🚀 Página cargada. Iniciando prueba automática...', 'info');
+            testFirebaseConnection();
+        }, 1000);
+    </script>
+</body>
+</html>

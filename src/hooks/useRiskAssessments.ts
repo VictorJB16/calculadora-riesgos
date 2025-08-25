@@ -33,15 +33,20 @@ export const useRiskAssessments = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  console.log('🔥 Hook useRiskAssessments inicializado')
+
   // Cargar evaluaciones desde Firebase
   const loadAssessments = async () => {
+    console.log('🔄 loadAssessments: Iniciando carga desde Firebase...')
     setLoading(true)
     setError(null)
     
     try {
+      console.log('📊 Ejecutando query a Firebase...')
       const q = query(collection(db, 'riskAssessments'), orderBy('createdAt', 'desc'))
       const querySnapshot = await getDocs(q)
       
+      console.log(`📝 Firebase devolvió ${querySnapshot.size} documentos`)
       const loadedAssessments: RiskAssessment[] = []
       querySnapshot.forEach((doc) => {
         const data = doc.data()
@@ -73,6 +78,7 @@ export const useRiskAssessments = () => {
 
   // Guardar nueva evaluación
   const addAssessment = async (assessment: Omit<RiskAssessment, 'id' | 'createdAt'>) => {
+    console.log('💾 addAssessment: Guardando evaluación:', assessment)
     setLoading(true)
     setError(null)
     
@@ -82,7 +88,10 @@ export const useRiskAssessments = () => {
     }
     
     try {
+      console.log('🔥 Enviando a Firebase:', newAssessment)
       const docRef = await addDoc(collection(db, 'riskAssessments'), newAssessment)
+      console.log('✅ Firebase devolvió ID:', docRef.id)
+      
       const savedAssessment = { 
         ...newAssessment, 
         id: docRef.id,
@@ -122,6 +131,7 @@ export const useRiskAssessments = () => {
 
   // Cargar evaluaciones al inicializar
   useEffect(() => {
+    console.log('🚀 useEffect: Hook montado, iniciando carga...')
     loadAssessments()
   }, [])
 
