@@ -5,12 +5,12 @@ import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDHI1JV_gxUE0tqnaWF9bWJvCwTrhzdSMM",
-  authDomain: "risk-calculator-9251e.firebaseapp.com",
-  projectId: "risk-calculator-9251e",
-  storageBucket: "risk-calculator-9251e.firebasestorage.app",
-  messagingSenderId: "657154942565",
-  appId: "1:657154942565:web:85b75fe6769db548a0c88c"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDHI1JV_gxUE0tqnaWF9bWJvCwTrhzdSMM",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "risk-calculator-9251e.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "risk-calculator-9251e",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "risk-calculator-9251e.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "657154942565",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:657154942565:web:85b75fe6769db548a0c88c"
 };
 
 // Initialize Firebase
