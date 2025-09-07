@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Calculator, BarChart3, FileText, ChevronRight } from 'lucide-react';
+import SentryTestButton from '../components/SentryTestButton';
 
 const Home: React.FC = () => {
   return (
@@ -81,7 +82,7 @@ const Home: React.FC = () => {
         </div>
 
         {/* About Section */}
-        <Card className="bg-white/80 backdrop-blur-sm">
+        <Card className="bg-white/80 backdrop-blur-sm mb-8">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Calculadora de Riesgo</CardTitle>
           </CardHeader>
@@ -116,6 +117,13 @@ const Home: React.FC = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Sentry Testing Section - Solo visible en desarrollo */}
+        {import.meta.env.DEV && (
+          <div className="mb-8">
+            <SentryTestButton />
+          </div>
+        )}
       </div>
 
       {/* Footer */}

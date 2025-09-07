@@ -1,0 +1,56 @@
+// Reglas de Firestore para la Calculadora de Riesgos
+// Estas reglas permiten acceso público para desarrollo y testing
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Reglas para la colección de evaluaciones de riesgos
+    match /riskAssessments/{assessmentId} {
+      // Permitir lectura a todos
+      allow read: if true;
+      
+      // Permitir escritura con validación básica
+      allow create: if request.resource.data.keys().hasAll(['name', 'asset', 'method']) &&
+                       request.resource.data.name is string &&
+                       request.resource.data.asset is string &&
+                       request.resource.data.method in ['qualitative', 'quantitative'] &&
+                       request.resource.data.probability is number &&
+                       request.resource.data.impact is number;
+      
+      // Permitir actualizaciones con validación similar
+      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['name', 'asset', 'description', 'threat', 'vulnerability', 
+                                'method', 'probability', 'impact', 'vulnerabilitySeverity',
+                                'controlEffectiveness', 'detectionCapability', 'responseCapability',
+                                'confidentialityImpact', 'integrityImpact', 'availabilityImpact',
+                                'existingControls', 'proposedControls', 'inherentRisk', 
+                                'residualRisk', 'riskLevel', 'organization']);
+      
+      // No permitir eliminaciones por seguridad
+      allow delete: if false;
+    }
+    
+    // Reglas para otras colecciones futuras
+    match /{collection}/{document} {
+      // Por defecto, denegar acceso a otras colecciones
+      allow read, write: if false;
+    }
+  }
+}
+
+/* 
+INSTRUCCIONES PARA APLICAR ESTAS REGLAS:
+
+1. Ve a Firebase Console (console.firebase.google.com)
+2. Selecciona tu proyecto: risk-calculator-9251e
+3. Ve a "Firestore Database" en el menú lateral
+4. Haz clic en la pestaña "Rules"
+5. Reemplaza las reglas existentes con el contenido de este archivo
+6. Haz clic en "Publish" para aplicar los cambios
+
+NOTAS DE SEGURIDAD:
+- Estas reglas permiten acceso público para simplificar el desarrollo
+- En un entorno de producción real, deberías implementar autenticación
+- Considera agregar rate limiting y validaciones más estrictas
+- Las reglas actuales impiden eliminaciones para proteger los datos
+*/

@@ -10,6 +10,7 @@ Risk-Calcu es una aplicación web especializada en la evaluación y gestión de 
 - **Contexto Costarricense**: Considera regulaciones locales como la Ley de Protección de Datos (8968)
 - **Interfaz Moderna**: Desarrollada con React, TypeScript, Tailwind CSS y Shadcn UI
 - **Persistencia de Datos**: Integración con Firebase para almacenamiento en la nube
+- **Monitoreo con Sentry**: Seguimiento de errores y performance en tiempo real
 - **Cálculo Automático**: Matriz de riesgo con puntuación automática de impacto y probabilidad
 - **Historial de Evaluaciones**: Seguimiento de todas las evaluaciones realizadas
 
@@ -20,6 +21,7 @@ Risk-Calcu es una aplicación web especializada en la evaluación y gestión de 
 - **Navegación**: React Router DOM
 - **Base de Datos**: Firebase Firestore
 - **Autenticación**: Firebase Auth (configuración lista)
+- **Monitoreo**: Sentry para error tracking y performance
 - **Desarrollo**: ESLint + Hot Module Replacement
 
 ## 📋 Prerrequisitos
@@ -27,24 +29,25 @@ Risk-Calcu es una aplicación web especializada en la evaluación y gestión de 
 - Node.js 18+ 
 - npm o yarn
 - Cuenta de Firebase (para funcionalidad completa)
+- Cuenta de Sentry (para monitoreo)
 
 ## ⚡ Instalación y Configuración
 
 ### 1. Clonar e instalar dependencias
 
-\`\`\`bash
+```bash
 # Instalar dependencias
 npm install
-\`\`\`
+```
 
 ### 2. Configurar Firebase (Opcional)
 
 1. Crear un proyecto en [Firebase Console](https://console.firebase.google.com/)
 2. Habilitar Firestore Database
 3. Obtener la configuración del proyecto
-4. Actualizar el archivo \`src/lib/firebase.ts\`:
+4. Actualizar el archivo `src/lib/firebase.ts`:
 
-\`\`\`typescript
+```typescript
 const firebaseConfig = {
   apiKey: "tu-api-key",
   authDomain: "tu-proyecto.firebaseapp.com",
@@ -53,27 +56,44 @@ const firebaseConfig = {
   messagingSenderId: "tu-sender-id",
   appId: "tu-app-id"
 };
-\`\`\`
+```
 
-### 3. Ejecutar en desarrollo
+### 3. Configurar Sentry (Recomendado)
 
-\`\`\`bash
+1. Crear cuenta en [sentry.io](https://sentry.io)
+2. Crear un proyecto React
+3. Copiar `.env.example` a `.env`
+4. Configurar las variables de entorno:
+
+```bash
+VITE_SENTRY_DSN=https://your-dsn@sentry.io/project-id
+VITE_SENTRY_RELEASE=calculadora-riesgos@1.0.0
+```
+
+Ver [SENTRY_SETUP.md](./SENTRY_SETUP.md) para configuración completa.
+
+### 4. Ejecutar en desarrollo
+
+```bash
 npm run dev
-\`\`\`
+```
 
-La aplicación estará disponible en \`http://localhost:5173\`
+La aplicación estará disponible en `http://localhost:5173`
 
 ## 🏗️ Estructura del Proyecto
 
-\`\`\`
+```
 src/
 ├── components/          # Componentes reutilizables
 │   ├── ui/             # Componentes UI base (Shadcn)
+│   ├── ErrorBoundary.tsx  # Manejo de errores
+│   ├── PerformanceMonitor.tsx  # Monitoreo performance
 │   └── Navbar.tsx      # Navegación principal
 ├── hooks/              # Hooks personalizados
-│   └── useRiskAssessments.ts  # Hook para Firebase
+│   └── useRiskAssessments.ts  # Hook para Firebase + Sentry
 ├── lib/                # Utilidades y configuración
 │   ├── firebase.ts     # Configuración Firebase
+│   ├── sentry.ts       # Configuración Sentry
 │   └── utils.ts        # Utilidades generales
 ├── pages/              # Páginas de la aplicación
 │   ├── Home.tsx        # Página principal
@@ -81,13 +101,13 @@ src/
 │   └── About.tsx       # Información sobre la app
 ├── App.tsx             # Componente principal
 └── main.tsx            # Punto de entrada
-\`\`\`
+```
 
 ## 🎯 Uso de la Aplicación
 
 ### Evaluación de Riesgos
 
-1. **Navegar a la Calculadora**: Ir a \`/calculator\`
+1. **Navegar a la Calculadora**: Ir a `/calculator`
 2. **Completar el Formulario**:
    - Organización (opcional)
    - Activo a evaluar
@@ -131,17 +151,39 @@ La aplicación considera el marco regulatorio costarricense:
 - **Estándares internacionales ISO 27001 e ISO 31000**
 - **Marco de referencia NIST Cybersecurity Framework**
 
-## 🚀 Despliegue
+## � Monitoreo y Observabilidad
+
+### Sentry Integration
+- ✅ Error tracking automático
+- ✅ Performance monitoring
+- ✅ Session replay en errores
+- ✅ User context tracking
+- ✅ Custom breadcrumbs
+
+### Métricas monitoreadas:
+- Errores de JavaScript/React
+- Performance de carga
+- Errores de Firebase
+- Interacciones del usuario
+- Fallbacks a localStorage
+
+## �🚀 Despliegue
 
 ### Build para Producción
 
-\`\`\`bash
+```bash
 npm run build
-\`\`\`
+```
+
+### Build con Sentry
+
+```bash
+npm run build:sentry
+```
 
 ### Despliegue en Firebase Hosting
 
-\`\`\`bash
+```bash
 # Instalar Firebase CLI
 npm install -g firebase-tools
 
@@ -150,21 +192,23 @@ firebase init hosting
 
 # Desplegar
 firebase deploy
-\`\`\`
+```
 
 ## 📝 Scripts Disponibles
 
-- \`npm run dev\` - Servidor de desarrollo
-- \`npm run build\` - Build para producción
-- \`npm run preview\` - Preview del build
-- \`npm run lint\` - Ejecutar ESLint
+- `npm run dev` - Servidor de desarrollo
+- `npm run build` - Build para producción
+- `npm run build:sentry` - Build con release tracking
+- `npm run preview` - Preview del build
+- `npm run lint` - Ejecutar ESLint
+- `npm run test:sentry` - Test de Sentry
 
 ## 🤝 Contribución
 
 1. Fork el proyecto
-2. Crear una rama feature (\`git checkout -b feature/nueva-funcionalidad\`)
-3. Commit los cambios (\`git commit -am 'Agregar nueva funcionalidad'\`)
-4. Push a la rama (\`git push origin feature/nueva-funcionalidad\`)
+2. Crear una rama feature (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit los cambios (`git commit -am 'Agregar nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
 5. Crear un Pull Request
 
 ## 📞 Soporte y Contacto
@@ -175,7 +219,7 @@ firebase deploy
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo \`LICENSE\` para más detalles.
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
 
 ## 🙏 Agradecimientos
 
